@@ -19,7 +19,9 @@ class Client:
 
         nibbles = [Bitlist(puzzle_seed.bits[i:i + 4]) for i in range(0, len(puzzle_seed.bits), 4)]
         words = [self.words[i][nibble.to_int()] for i, nibble in zip(range(len(self.words)), nibbles)]
+        encrypted_words = [self.encrypt_word(word, nibbles[3].to_int()) for word in words]
         print(words)
+        print(encrypted_words)
 
     def _setup(self):
         print("Welcome to the Manual Blockchain Puzzle Tournament!\n")
@@ -51,6 +53,16 @@ class Client:
         id_bits = Bitlist.from_int(self.id, player_bit_length)
         self.unique_seed = random_bits + id_bits
         print(f"unique seed: {self.unique_seed}")
+
+    @staticmethod
+    def encrypt_word(word, key):
+        letters = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m",
+                   "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"]
+        letter_numbers = {letter: number for number, letter in enumerate(letters)}
+        encrypted_word = ""
+        for letter in word:
+            encrypted_word += letters[(letter_numbers[letter] + key) % len(letters)]
+        return encrypted_word
 
 
 if __name__ == '__main__':
