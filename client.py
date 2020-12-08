@@ -131,7 +131,7 @@ class Client:
                     self.blockchain.add_block(Block(unshuffled_input))
                     puzzle_seed = self.next_seed(self.blockchain.last_block().solution)
 
-                    random.seed(puzzle_seed.to_int())
+                    random.seed(Bitlist.from_list(puzzle_seed.bits[:-4]).to_int())
                     self.shared_random = random.getrandbits(random_size)
                     break
                 else:
