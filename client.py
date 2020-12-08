@@ -41,10 +41,9 @@ class Client:
         return encrypted_word
 
     def next_seed(self, last_seed):
-        without_id = Bitlist.from_list(last_seed.bits[:-1 * self.player_bit_length])
-        random.seed(without_id.to_int())
-        random_int = random.getrandbits(len(without_id))
-        random_bits = Bitlist.from_int(random_int, len(without_id))
+        random.seed(last_seed.to_int())
+        random_int = random.getrandbits(16 - self.player_bit_length)
+        random_bits = Bitlist.from_int(random_int, 16 - self.player_bit_length)
         id_bits = Bitlist.from_int(self.id, self.player_bit_length)
         return random_bits + id_bits
 
@@ -86,6 +85,8 @@ class Client:
         random_size = 16 - self.player_bit_length
 
         while True:
+            self.__log(f"puzzle seed: {puzzle_seed}")
+
             shuffled_seed = puzzle_seed.shuffle(self.shared_random)
             nibbles = [Bitlist(shuffled_seed.bits[i:i + 4]) for i in range(0, len(shuffled_seed.bits), 4)]
             words = [self.words[i][nibble.to_int()] for i, nibble in zip(range(len(self.words)), nibbles)]
