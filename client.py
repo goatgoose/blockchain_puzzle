@@ -18,7 +18,7 @@ class Client:
 
     def start(self):
         self._setup()
-        puzzle_seed = self.unique_seed.shuffled
+        puzzle_seed = self.unique_seed.shuffle()
 
         nibbles = [Bitlist(puzzle_seed.bits[i:i + 4]) for i in range(0, len(puzzle_seed.bits), 4)]
         words = [self.words[i][nibble.to_int()] for i, nibble in zip(range(len(self.words)), nibbles)]
@@ -47,8 +47,12 @@ class Client:
             return
 
         input_bitlist = Bitlist.from_hex(command)
-        print(input_bitlist)
-        print(puzzle_seed)
+        print(f"input: {input_bitlist}")
+        print(f"shuffled puzzle seed: {puzzle_seed}")
+
+        unshuffled_input_bitlist = input_bitlist.unshuffle()
+        print(f"unshuffled input: {unshuffled_input_bitlist}")
+        print(f"original seed: {self.unique_seed}")
 
 
     def _setup(self):

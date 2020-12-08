@@ -6,6 +6,8 @@ class Bitlist:
         else:
             self.bits = []
 
+        self.shuffle_shift_amount = 5
+
     @staticmethod
     def from_int(i, n=0):
         return Bitlist(Bitlist._to_binary(i, n))
@@ -33,10 +35,9 @@ class Bitlist:
         new_bitlist.bits = bitlist.bits.copy()
         return new_bitlist
 
-    @property
-    def shuffled(self):
+    def shuffle(self):
         flipped = [1 if bit == 0 else 0 for bit in self.bits]
-        shift_amount = 5
+        shift_amount = self.shuffle_shift_amount
 
         shifted = []
         for i in range(len(flipped)):
@@ -45,8 +46,20 @@ class Bitlist:
         reverse_shifted = list(reversed(shifted))
 
         shuffled_bitlist = Bitlist.from_list(reverse_shifted)
-        print(f"shuffled: {shuffled_bitlist}")
         return shuffled_bitlist
+
+    def unshuffle(self):
+        reverse = list(reversed(self.bits))
+
+        shift_amount = self.shuffle_shift_amount
+        shifted = []
+        for i in range(len(reverse)):
+            shifted.append(reverse[(i - shift_amount) % len(reverse)])
+
+        flipped = [1 if bit == 0 else 0 for bit in shifted]
+
+        unshuffled_bitlist = Bitlist.from_list(flipped)
+        return unshuffled_bitlist
 
     @staticmethod
     def readable_str(bits):
@@ -74,6 +87,16 @@ class Bitlist:
 
     def __len__(self):
         return len(self.bits)
+
+    def __eq__(self, other):
+        if len(self.bits) != len(other.bits):
+            return False
+
+        for bit1, bit2 in zip(self.bits, other.bits):
+            if bit1 != bit2:
+                return False
+
+        return True
 
     @staticmethod
     def _to_binary(x, n=0):
