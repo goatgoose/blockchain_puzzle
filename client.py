@@ -75,7 +75,7 @@ class Client:
         puzzle_seed = self.unique_seed
 
         while True:
-            shuffled_seed = puzzle_seed.shuffle()
+            shuffled_seed = puzzle_seed.shuffle(self.id)
             nibbles = [Bitlist(shuffled_seed.bits[i:i + 4]) for i in range(0, len(shuffled_seed.bits), 4)]
             words = [self.words[i][nibble.to_int()] for i, nibble in zip(range(len(self.words)), nibbles)]
             encrypted_words = [self.encrypt_word(word, nibbles[3].to_int()) for word in words]
@@ -108,7 +108,7 @@ class Client:
                 self.__log(f"input: {input_bitlist}")
                 self.__log(f"shuffled puzzle seed: {shuffled_seed}")
 
-                unshuffled_input = input_bitlist.unshuffle()
+                unshuffled_input = input_bitlist.unshuffle(self.id)
                 self.__log(f"unshuffled input: {unshuffled_input}")
                 self.__log(f"original seed: {puzzle_seed}")
 
