@@ -4,11 +4,18 @@ class Bitlist:
         if bits:
             self.bits = bits.copy()
         else:
-            self.bits = None
+            self.bits = []
 
     @staticmethod
     def from_int(i, n=0):
         return Bitlist(Bitlist._to_binary(i, n))
+
+    @staticmethod
+    def from_hex(hex_list):
+        bitlist = Bitlist()
+        for hex_ in hex_list:
+            bitlist += Bitlist.from_int(int(hex_, 16), 4)
+        return bitlist
 
     @staticmethod
     def from_str(string):
@@ -53,7 +60,7 @@ class Bitlist:
     def to_int(self):
         total = 0
         for i, bit in enumerate(reversed(self.bits)):
-            total += bit ** i
+            total += bit * 2 ** i
         return total
 
     def __str__(self):
