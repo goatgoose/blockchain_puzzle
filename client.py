@@ -21,8 +21,10 @@ class Client:
         self.player_bit_length = None
 
     def start(self):
+        self.is_finished = False
         self._setup()
         self._game_loop()
+        self._game_end()
 
     def encrypt_word(self, word, key):
         letter_numbers = {letter: number for number, letter in enumerate(self.letters)}
@@ -72,7 +74,7 @@ class Client:
     def _game_loop(self):
         puzzle_seed = self.unique_seed
 
-        while not self.is_finished:
+        while True:
             shuffled_seed = puzzle_seed.shuffle()
             nibbles = [Bitlist(shuffled_seed.bits[i:i + 4]) for i in range(0, len(shuffled_seed.bits), 4)]
             words = [self.words[i][nibble.to_int()] for i, nibble in zip(range(len(self.words)), nibbles)]
@@ -100,7 +102,7 @@ class Client:
                 command = input("> ").strip().lower()
                 if command == "exit":
                     self.is_finished = True
-                    continue
+                    return
 
                 input_bitlist = Bitlist.from_hex(command)
                 self.__log(f"input: {input_bitlist}")
@@ -117,6 +119,22 @@ class Client:
                     break
                 else:
                     print(f"Invalid solution.  Keep trying to solve!")
+
+    def _game_end(self):
+        points = {}
+
+        for block in self.blockchain.blocks:
+            solution = block.solution
+            id_ = Bitlist.from_list(solution.bits[-1 * self.player_bit_length:]).to_int()
+
+            if id_ not in points:
+                points[id_] = 0
+            points[id_] += 1
+
+        print("---------------------------")
+        print("points:")
+        for id_ in points:
+            print(f"\t player {id_}: {points[id_]}")
 
     def __log(self, message):
         if self.verbose:
