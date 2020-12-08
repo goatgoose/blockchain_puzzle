@@ -88,9 +88,9 @@ class Client:
             self.__log(f"cypher: {nibbles[3]} {nibbles[3].to_int()}")
             self.__log(f"original words: {words}")
 
-            table_data = [["Hex", "#1", "#2", "#3"]]
+            table_data = [["#1", "#2", "#3", "Hex"]]
             for row in range(len(self.words[0])):
-                table_data.append([f"{hex(row)[2:]}: {row}"] + [self.words[i][row] for i in range(len(self.words))])
+                table_data.append([self.words[i][row] for i in range(len(self.words))] + [f"{hex(row)[2:]}: {row}"])
             table = AsciiTable(table_data, title="Reference Sheet")
             print(table.table)
 
@@ -114,7 +114,7 @@ class Client:
                 self.__log(f"input: {input_bitlist}")
                 self.__log(f"shuffled puzzle seed: {shuffled_seed}")
 
-                unshuffled_input = Bitlist.from_int(self.shared_random, 16).shuffle(input_bitlist.to_int())
+                unshuffled_input = input_bitlist.unshuffle(self.shared_random)
                 self.__log(f"unshuffled input: {unshuffled_input}")
                 self.__log(f"original seed: {puzzle_seed}")
 

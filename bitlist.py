@@ -37,8 +37,28 @@ class Bitlist:
 
     def shuffle(self, seed):
         seed_bitlist = Bitlist.from_int(seed, 16)
+
+        last_nibble = self.bits[-4:]
+        for i in range(3):
+            for j, bit in enumerate(last_nibble):
+                seed_bitlist.bits[(4 * i) + j] = seed_bitlist.bits[(4 * i) + j] ^ bit
+
         for i, bit in enumerate(self.bits):
             seed_bitlist.bits[i] = seed_bitlist.bits[i] ^ bit
+
+        return seed_bitlist
+
+    def unshuffle(self, seed):
+        seed_bitlist = Bitlist.from_int(seed, 16)
+
+        for i, bit in enumerate(self.bits):
+            seed_bitlist.bits[i] = seed_bitlist.bits[i] ^ bit
+
+        last_nibble = seed_bitlist.bits[-4:]
+        for i in range(3):
+            for j, bit in enumerate(last_nibble):
+                seed_bitlist.bits[(4 * i) + j] = seed_bitlist.bits[(4 * i) + j] ^ bit
+
         return seed_bitlist
 
     @staticmethod
