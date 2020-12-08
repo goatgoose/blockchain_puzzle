@@ -3,6 +3,7 @@ import json
 from blockchain import Blockchain, Block
 from bitlist import Bitlist
 from terminaltables import AsciiTable
+import time
 
 
 class Client:
@@ -21,6 +22,10 @@ class Client:
         self.player_bit_length = None
 
         self.shared_random = None
+
+        ciphers = list(range(1, 17))
+        random.shuffle(ciphers)
+        self.ciphers_map = {i: j for i, j in zip(list(range(16)), ciphers)}
 
     def start(self):
         self.is_finished = False
@@ -84,13 +89,15 @@ class Client:
             shuffled_seed = puzzle_seed.shuffle(self.shared_random)
             nibbles = [Bitlist(shuffled_seed.bits[i:i + 4]) for i in range(0, len(shuffled_seed.bits), 4)]
             words = [self.words[i][nibble.to_int()] for i, nibble in zip(range(len(self.words)), nibbles)]
-            encrypted_words = [self.encrypt_word(word, nibbles[3].to_int()) for word in words]
-            self.__log(f"cypher: {nibbles[3]} {nibbles[3].to_int()}")
+            cipher = self.ciphers_map[nibbles[3].to_int()]
+            encrypted_words = [self.encrypt_word(word, cipher) for word in words]
+            self.__log(f"cypher: {cipher}")
             self.__log(f"original words: {words}")
 
             table_data = [["#1", "#2", "#3", "Hex"]]
             for row in range(len(self.words[0])):
-                table_data.append([self.words[i][row] for i in range(len(self.words))] + [f"{hex(row)[2:]}: {row}"])
+                row_offset = self.ciphers_map[row]
+                table_data.append([f"{hex(row)[2:]}: {self.words[i][row]}" for i in range(len(self.words))] + [f"{hex(row)[2:]}: {row_offset}"])
             table = AsciiTable(table_data, title="Reference Sheet")
             print(table.table)
 
