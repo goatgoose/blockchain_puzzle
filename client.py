@@ -44,7 +44,7 @@ class Client:
     def _setup(self):
         print("Welcome to the Manual Blockchain Puzzle Tournament!\n")
         player_count = int(input("Number of players: "))
-        self.player_bit_length = len(Bitlist.from_int(player_count))
+        self.player_bit_length = len(Bitlist.from_int(player_count - 1))
 
         self.id = int(input("Enter ID: "))
 
