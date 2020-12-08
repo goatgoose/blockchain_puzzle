@@ -17,14 +17,62 @@ class Client:
 
         self.id = None
         self.unique_seed = None
+        self.is_finished = False
+        self.player_bit_length = None
 
     def start(self):
         self._setup()
+        self._game_loop()
 
-        is_finished = False
+    def encrypt_word(self, word, key):
+        letter_numbers = {letter: number for number, letter in enumerate(self.letters)}
+        encrypted_word = ""
+        for letter in word:
+            encrypted_word += self.letters[(letter_numbers[letter] + key) % len(self.letters)]
+        return encrypted_word
+
+    def next_seed(self, last_seed):
+        without_id = Bitlist.from_list(last_seed.bits[:-1 * self.player_bit_length])
+        random.seed(without_id.to_int())
+        random_int = random.getrandbits(len(without_id))
+        random_bits = Bitlist.from_int(random_int, len(without_id))
+        id_bits = Bitlist.from_int(self.id, self.player_bit_length)
+        return random_bits + id_bits
+
+    def _setup(self):
+        print("Welcome to the Manual Blockchain Puzzle Tournament!\n")
+        player_count = int(input("Number of players: "))
+        self.player_bit_length = len(Bitlist.from_int(player_count))
+
+        self.id = int(input("Enter ID: "))
+
+        print(
+            f"Would you like to: \n"
+            f"\t 1. Generate a seed\n"
+            f"\t 2. Enter a seed"
+        )
+        option = int(input("> ").strip())
+
+        random_bits = None
+        random_size = 16 - self.player_bit_length
+        if option == 1:
+            random_int = random.getrandbits(random_size)
+            random_bits = Bitlist.from_int(random_int, random_size)
+            print(f"Generated seed: {random_bits}")
+        else:
+            random_bit_string = input("Enter seed: ").replace(" ", "")
+            random_bits = Bitlist.from_str(random_bit_string)
+            assert len(random_bits) == random_size
+            for bit in random_bits.bits:
+                assert bit == 0 or bit == 1
+
+        id_bits = Bitlist.from_int(self.id, self.player_bit_length)
+        self.unique_seed = random_bits + id_bits
+
+    def _game_loop(self):
         puzzle_seed = self.unique_seed
 
-        while not is_finished:
+        while not self.is_finished:
             shuffled_seed = puzzle_seed.shuffle()
             nibbles = [Bitlist(shuffled_seed.bits[i:i + 4]) for i in range(0, len(shuffled_seed.bits), 4)]
             words = [self.words[i][nibble.to_int()] for i, nibble in zip(range(len(self.words)), nibbles)]
@@ -51,7 +99,8 @@ class Client:
                 print("Enter a proof code, or 'exit':")
                 command = input("> ").strip().lower()
                 if command == "exit":
-                    return
+                    self.is_finished = True
+                    continue
 
                 input_bitlist = Bitlist.from_hex(command)
                 self.__log(f"input: {input_bitlist}")
@@ -61,48 +110,13 @@ class Client:
                 self.__log(f"unshuffled input: {unshuffled_input}")
                 self.__log(f"original seed: {puzzle_seed}")
 
-                if unshuffled_input.bits[:-1 * self.id.bit_length()] == puzzle_seed.bits[:-1 * self.id.bit_length()]:
+                if unshuffled_input.bits[:-1 * self.player_bit_length] == puzzle_seed.bits[:-1 * self.player_bit_length]:
                     self.__log(f"valid solution.")
+                    self.blockchain.add_block(Block(unshuffled_input))
+                    puzzle_seed = self.next_seed(self.blockchain.last_block().solution)
                     break
                 else:
                     print(f"Invalid solution.  Keep trying to solve!")
-
-    def _setup(self):
-        print("Welcome to the Manual Blockchain Puzzle Tournament!\n")
-        player_count = int(input("Number of players: "))
-        player_bit_length = len(Bitlist.from_int(player_count))
-
-        self.id = int(input("Enter ID: "))
-
-        print(
-            f"Would you like to: \n"
-            f"\t 1. Generate a seed\n"
-            f"\t 2. Enter a seed"
-        )
-        option = int(input("> ").strip())
-
-        random_bits = None
-        random_size = 16 - player_bit_length
-        if option == 1:
-            random_int = random.getrandbits(random_size)
-            random_bits = Bitlist.from_int(random_int, random_size)
-            print(f"Generated seed: {random_bits}")
-        else:
-            random_bit_string = input("Enter seed: ").replace(" ", "")
-            random_bits = Bitlist.from_str(random_bit_string)
-            assert len(random_bits) == random_size
-            for bit in random_bits.bits:
-                assert bit == 0 or bit == 1
-
-        id_bits = Bitlist.from_int(self.id, player_bit_length)
-        self.unique_seed = random_bits + id_bits
-
-    def encrypt_word(self, word, key):
-        letter_numbers = {letter: number for number, letter in enumerate(self.letters)}
-        encrypted_word = ""
-        for letter in word:
-            encrypted_word += self.letters[(letter_numbers[letter] + key) % len(self.letters)]
-        return encrypted_word
 
     def __log(self, message):
         if self.verbose:

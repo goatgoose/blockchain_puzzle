@@ -4,13 +4,15 @@ class Blockchain:
         self.blocks = []
 
     def add_block(self, block):
-        pass
+        self.blocks.append(block)
 
     def last_block(self):
-        pass
+        if len(self.blocks) == 0:
+            return None
+        return self.blocks[-1]
 
 
 class Block:
-    def __init__(self, solution_bitlist):
-        self.solution_bitlist = solution_bitlist
+    def __init__(self, solution):
+        self.solution = solution
 
