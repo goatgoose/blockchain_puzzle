@@ -20,6 +20,8 @@ class Client:
         self.is_finished = False
         self.player_bit_length = None
 
+        self.shared_random = None
+
     def start(self):
         self.is_finished = False
         self._setup()
@@ -71,11 +73,15 @@ class Client:
         id_bits = Bitlist.from_int(self.id, self.player_bit_length)
         self.unique_seed = random_bits + id_bits
 
+        random.seed(random_bits.to_int())
+        self.shared_random = random.getrandbits(16)
+
     def _game_loop(self):
         puzzle_seed = self.unique_seed
+        random_size = 16 - self.player_bit_length
 
         while True:
-            shuffled_seed = puzzle_seed.shuffle(self.id)
+            shuffled_seed = puzzle_seed.shuffle(self.shared_random)
             nibbles = [Bitlist(shuffled_seed.bits[i:i + 4]) for i in range(0, len(shuffled_seed.bits), 4)]
             words = [self.words[i][nibble.to_int()] for i, nibble in zip(range(len(self.words)), nibbles)]
             encrypted_words = [self.encrypt_word(word, nibbles[3].to_int()) for word in words]
@@ -108,7 +114,7 @@ class Client:
                 self.__log(f"input: {input_bitlist}")
                 self.__log(f"shuffled puzzle seed: {shuffled_seed}")
 
-                unshuffled_input = input_bitlist.unshuffle(self.id)
+                unshuffled_input = Bitlist.from_int(self.shared_random, 16).shuffle(input_bitlist.to_int())
                 self.__log(f"unshuffled input: {unshuffled_input}")
                 self.__log(f"original seed: {puzzle_seed}")
 
@@ -116,6 +122,9 @@ class Client:
                     self.__log(f"valid solution.")
                     self.blockchain.add_block(Block(unshuffled_input))
                     puzzle_seed = self.next_seed(self.blockchain.last_block().solution)
+
+                    random.seed(puzzle_seed.to_int())
+                    self.shared_random = random.getrandbits(random_size)
                     break
                 else:
                     print(f"Invalid solution.  Keep trying to solve!")

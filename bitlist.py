@@ -6,11 +6,7 @@ class Bitlist:
         else:
             self.bits = []
 
-        self.shuffle_shift_amount = 7
-
-        self.bit_masks = [
-            27991, 48674, 16855, 14124
-        ]
+        self.shuffle_shift_amount = 2
 
     @staticmethod
     def from_int(i, n=0):
@@ -39,52 +35,11 @@ class Bitlist:
         new_bitlist.bits = bitlist.bits.copy()
         return new_bitlist
 
-    def shuffle(self, id_):
-        id_bitlist = Bitlist.from_int(id_)
-        masks_to_apply = []
-        for i, bit in enumerate(id_bitlist.bits):
-            if bit == 0:
-                masks_to_apply.append(Bitlist.from_int(self.bit_masks[i]))
-
-        masked = self.bits.copy()
-        for mask in masks_to_apply:
-            for i, bit in enumerate(mask.bits):
-                masked[i] = masked[i] ^ bit
-
-        flipped = [1 if bit == 0 else 0 for bit in masked]
-        shift_amount = self.shuffle_shift_amount
-
-        shifted = []
-        for i in range(len(flipped)):
-            shifted.append(flipped[(i + shift_amount) % len(flipped)])
-
-        reverse_shifted = list(reversed(shifted))
-
-        shuffled_bitlist = Bitlist.from_list(reverse_shifted)
-        return shuffled_bitlist
-
-    def unshuffle(self, id_):
-        reverse = list(reversed(self.bits))
-
-        shift_amount = self.shuffle_shift_amount
-        shifted = []
-        for i in range(len(reverse)):
-            shifted.append(reverse[(i - shift_amount) % len(reverse)])
-
-        flipped = [1 if bit == 0 else 0 for bit in shifted]
-
-        id_bitlist = Bitlist.from_int(id_)
-        masks_to_apply = []
-        for i, bit in enumerate(id_bitlist.bits):
-            if bit == 0:
-                masks_to_apply.append(Bitlist.from_int(self.bit_masks[i]))
-
-        for mask in masks_to_apply:
-            for i, bit in enumerate(mask.bits):
-                flipped[i] = flipped[i] ^ bit
-
-        unshuffled_bitlist = Bitlist.from_list(flipped)
-        return unshuffled_bitlist
+    def shuffle(self, seed):
+        seed_bitlist = Bitlist.from_int(seed, 16)
+        for i, bit in enumerate(self.bits):
+            seed_bitlist.bits[i] = seed_bitlist.bits[i] ^ bit
+        return seed_bitlist
 
     @staticmethod
     def readable_str(bits):
