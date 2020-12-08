@@ -6,7 +6,9 @@ from terminaltables import AsciiTable
 
 
 class Client:
-    def __init__(self):
+    def __init__(self, verbose=False):
+        self.verbose = verbose
+
         self.blockchain = Blockchain()
 
         self.words = json.load(open("words.json", "r"))
@@ -18,42 +20,52 @@ class Client:
 
     def start(self):
         self._setup()
-        puzzle_seed = self.unique_seed.shuffle()
 
-        nibbles = [Bitlist(puzzle_seed.bits[i:i + 4]) for i in range(0, len(puzzle_seed.bits), 4)]
-        words = [self.words[i][nibble.to_int()] for i, nibble in zip(range(len(self.words)), nibbles)]
-        encrypted_words = [self.encrypt_word(word, nibbles[3].to_int()) for word in words]
-        print(f"cypher: {nibbles[3]} {nibbles[3].to_int()}")
-        print(f"original words: {words}")
+        is_finished = False
+        puzzle_seed = self.unique_seed
 
-        table_data = [["Hex", "#1", "#2", "#3"]]
-        for row in range(len(self.words[0])):
-            table_data.append([f"{hex(row)[2:]}: {row}"] + [self.words[i][row] for i in range(len(self.words))])
-        table = AsciiTable(table_data, title="Reference Sheet")
-        print(table.table)
+        while not is_finished:
+            shuffled_seed = puzzle_seed.shuffle()
+            nibbles = [Bitlist(shuffled_seed.bits[i:i + 4]) for i in range(0, len(shuffled_seed.bits), 4)]
+            words = [self.words[i][nibble.to_int()] for i, nibble in zip(range(len(self.words)), nibbles)]
+            encrypted_words = [self.encrypt_word(word, nibbles[3].to_int()) for word in words]
+            self.__log(f"cypher: {nibbles[3]} {nibbles[3].to_int()}")
+            self.__log(f"original words: {words}")
 
-        print(AsciiTable([
-            self.letters,
-            list(range(len(self.letters)))
-        ], title="Alphabet").table)
-        print()
+            table_data = [["Hex", "#1", "#2", "#3"]]
+            for row in range(len(self.words[0])):
+                table_data.append([f"{hex(row)[2:]}: {row}"] + [self.words[i][row] for i in range(len(self.words))])
+            table = AsciiTable(table_data, title="Reference Sheet")
+            print(table.table)
 
-        print(f"Decipher the following puzzle:")
-        print(f"\t {' '.join(encrypted_words)}\n")
+            print(AsciiTable([
+                self.letters,
+                list(range(len(self.letters)))
+            ], title="Alphabet").table)
+            print()
 
-        print("Enter a proof code, or 'exit':")
-        command = input("> ").strip().lower()
-        if command == "exit":
-            return
+            print(f"Decipher the following puzzle:")
+            print(f"\t {' '.join(encrypted_words)}\n")
 
-        input_bitlist = Bitlist.from_hex(command)
-        print(f"input: {input_bitlist}")
-        print(f"shuffled puzzle seed: {puzzle_seed}")
+            while True:
+                print("Enter a proof code, or 'exit':")
+                command = input("> ").strip().lower()
+                if command == "exit":
+                    return
 
-        unshuffled_input_bitlist = input_bitlist.unshuffle()
-        print(f"unshuffled input: {unshuffled_input_bitlist}")
-        print(f"original seed: {self.unique_seed}")
+                input_bitlist = Bitlist.from_hex(command)
+                self.__log(f"input: {input_bitlist}")
+                self.__log(f"shuffled puzzle seed: {shuffled_seed}")
 
+                unshuffled_input = input_bitlist.unshuffle()
+                self.__log(f"unshuffled input: {unshuffled_input}")
+                self.__log(f"original seed: {puzzle_seed}")
+
+                if unshuffled_input.bits[:-1 * self.id.bit_length()] == puzzle_seed.bits[:-1 * self.id.bit_length()]:
+                    self.__log(f"valid solution.")
+                    break
+                else:
+                    print(f"Invalid solution.  Keep trying to solve!")
 
     def _setup(self):
         print("Welcome to the Manual Blockchain Puzzle Tournament!\n")
@@ -92,6 +104,10 @@ class Client:
             encrypted_word += self.letters[(letter_numbers[letter] + key) % len(self.letters)]
         return encrypted_word
 
+    def __log(self, message):
+        if self.verbose:
+            print(f"[verbose] {message}")
+
 
 if __name__ == '__main__':
-    Client().start()
+    Client(verbose=True).start()
