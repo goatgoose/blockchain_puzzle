@@ -46,7 +46,7 @@ class Bitlist:
         bit_string = ""
         for i, bit in enumerate(bits):
             bit_string += str(bit)
-            if (i + 1) % 4 == 0:
+            if (i + 1) % 4 == 0 and i < len(bits) - 1:
                 bit_string += " "
         return bit_string
 

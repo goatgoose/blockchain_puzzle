@@ -2,6 +2,7 @@ import random
 import json
 from blockchain import Blockchain, Block
 from bitlist import Bitlist
+from terminaltables import AsciiTable
 
 
 class Client:
@@ -20,8 +21,16 @@ class Client:
         nibbles = [Bitlist(puzzle_seed.bits[i:i + 4]) for i in range(0, len(puzzle_seed.bits), 4)]
         words = [self.words[i][nibble.to_int()] for i, nibble in zip(range(len(self.words)), nibbles)]
         encrypted_words = [self.encrypt_word(word, nibbles[3].to_int()) for word in words]
-        print(words)
-        print(encrypted_words)
+
+        table_data = [["Hex", "#1", "#2", "#3"]]
+        for row in range(len(self.words[0])):
+            table_data.append([hex(row)] + [self.words[i][row] for i in range(len(self.words))])
+        table = AsciiTable(table_data, title="Reference Sheet")
+        print(table.table)
+        print()
+
+        print(f"Decipher the following puzzle:")
+        print(f"\t {' '.join(encrypted_words)}")
 
     def _setup(self):
         print("Welcome to the Manual Blockchain Puzzle Tournament!\n")
@@ -42,7 +51,6 @@ class Client:
         if option == 1:
             random_int = random.getrandbits(random_size)
             random_bits = Bitlist.from_int(random_int, random_size)
-            print(f"Random seed: {random_bits}")
         else:
             random_bit_string = input("Enter seed: ").replace(" ", "")
             random_bits = Bitlist.from_str(random_bit_string)
@@ -52,7 +60,6 @@ class Client:
 
         id_bits = Bitlist.from_int(self.id, player_bit_length)
         self.unique_seed = random_bits + id_bits
-        print(f"unique seed: {self.unique_seed}")
 
     @staticmethod
     def encrypt_word(word, key):
