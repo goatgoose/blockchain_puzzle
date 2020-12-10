@@ -2,4 +2,5 @@
 
 *.aux
 *.log
-*.pdf
+
+__pycache__/
